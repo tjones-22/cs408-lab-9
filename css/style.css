@@ -23,3 +23,19 @@ h1 {
   color: transparent;
   text-shadow: 0 0 4px white;
 }
+p {
+  position: absolute;
+  margin: 0;
+  top: 35px;
+  right: 5px;
+  color: #aaa;
+  font-size: 25px;
+}
+.timer{
+  position:absolute;
+  margin: 0;
+  top:70px;
+  right:5px;
+  color:white;
+  font-size:25px;
+}
