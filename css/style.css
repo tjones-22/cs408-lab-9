@@ -20,15 +20,15 @@ h1 {
   top: -4px;
   right: 5px;
 
-  color: transparent;
-  text-shadow: 0 0 4px white;
+  color: white;
+  font-size: 30px;
 }
 p {
   position: absolute;
   margin: 0;
   top: 35px;
   right: 5px;
-  color: #aaa;
+  color: white;
   font-size: 25px;
 }
 .timer{
