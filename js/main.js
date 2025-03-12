@@ -1,20 +1,24 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 
+// Set initial canvas size
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Score tracking
 const scoreTag = document.createElement("p");
 document.body.appendChild(scoreTag);
 let score = 0;
 scoreTag.textContent = `Ball Count: ${score}`;
 
+// Timer tracking
 const timerTag = document.createElement("p");
-timerTag.classList.add("timer")
+timerTag.classList.add("timer");
 document.body.appendChild(timerTag);
 let startTime = null;
 let elapsedTime = 0;
 
-const width = (canvas.width = window.innerWidth);
-const height = (canvas.height = window.innerHeight);
-
+// Utility functions
 function random(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -23,6 +27,7 @@ function randomRGB() {
   return `rgb(${random(0, 255)},${random(0, 255)},${random(0, 255)})`;
 }
 
+// Base class for shapes
 class Shape {
   constructor(x, y, velX, velY) {
     this.x = x;
@@ -32,6 +37,7 @@ class Shape {
   }
 }
 
+// Ball class
 class Ball extends Shape {
   constructor(x, y, velX, velY, color, size) {
     super(x, y, velX, velY);
@@ -48,10 +54,10 @@ class Ball extends Shape {
   }
 
   update() {
-    if (this.x + this.size >= width || this.x - this.size <= 0) {
+    if (this.x + this.size >= canvas.width || this.x - this.size <= 0) {
       this.velX = -this.velX;
     }
-    if (this.y + this.size >= height || this.y - this.size <= 0) {
+    if (this.y + this.size >= canvas.height || this.y - this.size <= 0) {
       this.velY = -this.velY;
     }
     this.x += this.velX;
@@ -72,7 +78,8 @@ class Ball extends Shape {
   }
 }
 
-class EvilCircle extends Shape {
+// EvilCircle class 
+class EvilCircle extends Ball {
   constructor(x, y) {
     super(x, y, 7, 7);
     this.color = "rgb(255,255,255)";
@@ -95,8 +102,8 @@ class EvilCircle extends Shape {
   }
 
   checkBounds() {
-    this.x = Math.max(this.size, Math.min(width - this.size, this.x));
-    this.y = Math.max(this.size, Math.min(height - this.size, this.y));
+    this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x));
+    this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y));
   }
 
   collisionDetect() {
@@ -113,30 +120,44 @@ class EvilCircle extends Shape {
           this.color = randomRGB();
           this.size += 10;
           this.velX += 1.5;
-          this.velY += 1.5 ;
+          this.velY += 1.5;
         }
       }
     }
   }
 }
 
+// Create balls
 const balls = [];
 while (balls.length < 25) {
   const size = random(10, 20);
-  balls.push(new Ball(random(size, width - size), random(size, height - size), random(-7, 7), random(-7, 7), randomRGB(), size));
+  balls.push(
+    new Ball(
+      random(size, canvas.width - size),
+      random(size, canvas.height - size),
+      random(-7, 7),
+      random(-7, 7),
+      randomRGB(),
+      size
+    )
+  );
 }
 
-const evilBall = new EvilCircle(random(10, width - 10), random(10, height - 10));
+// Create EvilCircle 
+const evilBall = new EvilCircle(
+  random(10, canvas.width - 10),
+  random(10, canvas.height - 10)
+);
 
+// Track keyboard input
 const keys = {};
-
 window.addEventListener("keydown", (e) => {
   keys[e.key] = true;
 });
-
 window.addEventListener("keyup", (e) => {
   keys[e.key] = false;
 });
+
 
 function updateTimer() {
   if (startTime !== null) {
@@ -146,28 +167,47 @@ function updateTimer() {
 }
 
 function checkGameEnd() {
-  if (balls.every(ball => !ball.exists)) {
+  if (balls.every((ball) => !ball.exists)) {
     timerTag.textContent = `Final Time: ${elapsedTime.toFixed(2)}s`;
     return true;
   }
   return false;
 }
 
-let animationFrame;
+// Resize event handler
+window.addEventListener("resize", () => {
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  balls.forEach(ball => {
+    ball.x = Math.max(ball.size, Math.min(canvas.width - ball.size, ball.x));
+    ball.y = Math.max(ball.size, Math.min(canvas.height - ball.size, ball.y));
+  });
+
+  evilBall.x = Math.max(evilBall.size, Math.min(canvas.width - evilBall.size, evilBall.x));
+  evilBall.y = Math.max(evilBall.size, Math.min(canvas.height - evilBall.size, evilBall.y));
+});
+
 
 function loop() {
-  if (startTime === null) startTime = performance.now();
+  ctx.fillStyle = "rgba(0, 0, 0, 1)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
-  ctx.fillRect(0, 0, width, height);
+  let ballsRemaining = false;
 
   balls.forEach(ball => {
     if (ball.exists) {
       ball.draw();
       ball.update();
       ball.collisionDetect();
+      ballsRemaining = true;
     }
   });
+
+ 
+  evilBall.x = Math.max(evilBall.size, Math.min(canvas.width - evilBall.size, evilBall.x));
+  evilBall.y = Math.max(evilBall.size, Math.min(canvas.height - evilBall.size, evilBall.y));
 
   evilBall.move();
   evilBall.draw();
@@ -176,9 +216,15 @@ function loop() {
 
   updateTimer();
 
-  if (!checkGameEnd()) {
-    animationFrame = requestAnimationFrame(loop);
+  if (ballsRemaining) {
+    requestAnimationFrame(loop);
+  } else {
+    ctx.fillStyle = "rgba(0, 0, 0, 1)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    evilBall.draw();
+    timerTag.textContent = `Final Time: ${elapsedTime.toFixed(2)}s`;
   }
 }
 
+// Start game loop
 loop();
